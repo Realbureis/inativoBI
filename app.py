@@ -16,21 +16,17 @@ WEBHOOK_ANTECIPACAO = "https://n8n.corcaqui.com.br/webhook/regua_antecipacao"
 WEBHOOK_MEDIANA     = "https://n8n.corcaqui.com.br/webhook/regua_mediana_foco"
 WEBHOOK_CRITICO     = "https://n8n.corcaqui.com.br/webhook/regua_alerta_critico"
 
-# 📊 MAPEAMENTO INTELIGENTE DE UNIDADES (Baseado na análise dos seus dados)
-# Grupo 1: Giro Ultra Rápido (Mediana de 8 a 10 dias)
+# 📊 PERFIS ESTRATÉGICOS MAPEADOS
 PERFIL_ULTRA_RAPIDO = ['CDP Guarulhos 1', 'CDP Guarulhos 2']
 
-# Grupo 2: Giro Quinzenal Rápido (Mediana de 12 a 15 dias)
 PERFIL_QUINZENAL = [
     'CDP Pinheiros 3', 'CDP Hortolândia', 'CDP Diadema', 
     'CDP Mogi das Cruzes', 'CDP Franco da Rocha', 
     'CDP Caraguatatuba', 'CDP Taubaté'
 ]
 
-# Grupo 3: Giro Tradicional Próximo à Média (Mediana de 16 a 20 dias)
 PERFIL_TRADICIONAL = ['Penitenciária da Capital', 'CDP Pinheiros 1', 'CDP Vila Independência', 'Penitenciária Potim 2']
 
-# Grupo 4: Giro Longo / Mensal (Mediana acima de 22 dias)
 PERFIL_LONGO = [
     'Penitenciária Sorocaba 2', 'Penitenciária Guarulhos 1', 'Penitenciária José Parada Neto',
     'CDP São José do Rio Preto', 'CDP Mauá', 'CDP Belém 2', 'CDP Jundiaí', 
@@ -78,13 +74,13 @@ if uploaded_file is not None:
         if df is None or 'Data' not in df.columns:
             st.error("❌ Não foi possível ler o arquivo. Garanta que a coluna 'Data' existe.")
         else:
-            # 🧹 HIGIENIZAÇÃO CRÍTICA: Isolar estritamente clientes ativos com histórico de entregas de fato
+            # 🧹 FILTRO SOLICITADO: Isolar apenas clientes com histórico real de envios (>= 1)
             if 'Quant. Pedidos Enviados' in df.columns:
                 df = df[df['Quant. Pedidos Enviados'] >= 1]
             elif 'quant. pedidos enviados' in df.columns:
                 df = df[df['quant. pedidos enviados'] >= 1]
 
-            # Tratamento de datas
+            # Tratamento de datas e cálculo de inatividade
             df['Data'] = pd.to_datetime(df['Data']).dt.tz_localize(None)
             today = pd.to_datetime(datetime.now().date())
             df['Days_Since'] = (today - df['Data']).dt.days
@@ -94,12 +90,12 @@ if uploaded_file is not None:
             lote_mediana = []
             lote_critico = []
             
-            # 🧠 MOTOR DE INTELIGÊNCIA: Classificação linha por linha
+            # 🧠 MOTOR DE INTELIGÊNCIA DINÂMICO: Processa TODAS as unidades presentes no relatório
             for idx, row in df.iterrows():
                 dias = row['Days_Since']
                 unidade = str(row['Unidade Prisional']).strip()
                 
-                # Regras baseadas nos perfis extraídos do banco de dados
+                # Executa o roteamento de réguas baseado na Unidade Real detectada
                 if unidade in PERFIL_ULTRA_RAPIDO:
                     if dias == 5: lote_antecipacao.append(row)
                     elif dias == 9: lote_mediana.append(row)
@@ -121,8 +117,8 @@ if uploaded_file is not None:
                     elif dias == 35: lote_critico.append(row)
                     
                 else:
-                    # 🛡️ REGRA DE SEGURANÇA (Para unidades fora do TOP 25 ou novos cadastros)
-                    # Usa a mediana histórica geral da operação (23 dias)
+                    # 🚀 INTEGRAÇÃO TOTAL: Qualquer outra unidade das 197 presentes entra aqui automaticamente
+                    # Mapeamento do ciclo geral do negócio: Dia 14 (Antecipação), Dia 23 (Mediana), Dia 30 (Crítico)
                     if dias == 14: lote_antecipacao.append(row)
                     elif dias == 23: lote_mediana.append(row)
                     elif dias == 30: lote_critico.append(row)
@@ -135,9 +131,9 @@ if uploaded_file is not None:
             # 📊 Painel de Controle de Métricas na Tela
             st.divider()
             col1, col2, col3 = st.columns(3)
-            col1.metric(label="📅 Lote 1: Antecipação (No Timing da Unidade)", value=f"{len(df_ant)} clientes")
-            col2.metric(label="🎯 Lote 2: Mediana Exata (Foco de Recompra)", value=f"{len(df_med)} clientes")
-            col3.metric(label="🚨 Lote 3: Alerta Crítico (Risco de Churn)", value=f"{len(df_cri)} clientes")
+            col1.metric(label="📅 Lote 1: Antecipação", value=f"{len(df_ant)} clientes")
+            col2.metric(label="🎯 Lote 2: Mediana de Precisão", value=f"{len(df_med)} clientes")
+            col3.metric(label="🚨 Lote 3: Alerta Crítico", value=f"{len(df_cri)} clientes")
             st.divider()
             
             # --- FUNÇÃO PARA RENDERIZAR CADA GRUPO COM VISUALIZAÇÃO E DOWNLOAD ---
@@ -153,7 +149,7 @@ if uploaded_file is not None:
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                     )
                 else:
-                    st.info("Nenhum cliente elegível para este lote baseado no comportamento das unidades hoje.")
+                    st.info(f"Nenhum cliente elegível para o {titulo} hoje.")
                 st.divider()
 
             # Mostra as seções organizadas
@@ -180,7 +176,7 @@ if uploaded_file is not None:
                         res = requests.post(WEBHOOK_MEDIANA, headers={"Content-Type": "application/json"}, data=json.dumps(df_med.to_dict(orient='records'), default=str))
                         if res.status_code in [200, 201]: st.success(f"✅ {len(df_med)} contatos enviados para o fluxo de Mediana!")
                         else: st.error(f"❌ Erro na Mediana. Status: {res.status_code}"); sucesso = False
-                    except Exception as e: st.error(f"❌ Falha de conexão no Lote 2: {e}"); Clinical = False
+                    except Exception as e: st.error(f"❌ Falha de conexão no Lote 2: {e}"); sucesso = False
                 
                 # Envio Crítico
                 if not df_cri.empty:
