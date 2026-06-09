@@ -78,6 +78,12 @@ if uploaded_file is not None:
         if df is None or 'Data' not in df.columns:
             st.error("❌ Não foi possível ler o arquivo. Garanta que a coluna 'Data' existe.")
         else:
+            # 🧹 HIGIENIZAÇÃO CRÍTICA: Isolar estritamente clientes ativos com histórico de entregas de fato
+            if 'Quant. Pedidos Enviados' in df.columns:
+                df = df[df['Quant. Pedidos Enviados'] >= 1]
+            elif 'quant. pedidos enviados' in df.columns:
+                df = df[df['quant. pedidos enviados'] >= 1]
+
             # Tratamento de datas
             df['Data'] = pd.to_datetime(df['Data']).dt.tz_localize(None)
             today = pd.to_datetime(datetime.now().date())
@@ -174,7 +180,7 @@ if uploaded_file is not None:
                         res = requests.post(WEBHOOK_MEDIANA, headers={"Content-Type": "application/json"}, data=json.dumps(df_med.to_dict(orient='records'), default=str))
                         if res.status_code in [200, 201]: st.success(f"✅ {len(df_med)} contatos enviados para o fluxo de Mediana!")
                         else: st.error(f"❌ Erro na Mediana. Status: {res.status_code}"); sucesso = False
-                    except Exception as e: st.error(f"❌ Falha de conexão no Lote 2: {e}"); sucesso = False
+                    except Exception as e: st.error(f"❌ Falha de conexão no Lote 2: {e}"); Clinical = False
                 
                 # Envio Crítico
                 if not df_cri.empty:
