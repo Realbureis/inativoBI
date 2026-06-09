@@ -61,8 +61,8 @@ if uploaded_file is not None:
             if col_enviados in df.columns:
                 df = df[df[col_enviados] >= 1]
 
-            # Tratamento de datas e cálculo de inatividade (Days_Since)
-            df['Data'] = pd.to_datetime(df['Data']).dt.tz_localize(None)
+            # 🛠️ AJUSTE CRÍTICO: Conversão de data forçando o padrão brasileiro (dia primeiro)
+            df['Data'] = pd.to_datetime(df['Data'], dayfirst=True).dt.tz_localize(None)
             today = pd.to_datetime(datetime.now().date())
             df['Days_Since'] = (today - df['Data']).dt.days
             
@@ -70,7 +70,6 @@ if uploaded_file is not None:
             df = df.sort_values(by='Data', ascending=False).drop_duplicates(subset=['Codigo Cliente'], keep='first')
 
             # --- 🧠 MOTOR DE INTELIGÊNCIA ARTIFICIAL DINÂMICA POR UNIDADE ---
-            # O sistema conta o volume de vendas de cada unidade presente no arquivo para entender o seu peso/velocidade
             contagem_unidades = df['Unidade Prisional'].value_counts().to_dict()
             
             # Captura todas as unidades mapeadas para a barra lateral
@@ -85,20 +84,19 @@ if uploaded_file is not None:
                 dias = row['Days_Since']
                 unidade = str(row['Unidade Prisional']).strip()
                 
-                # Pega a relevância de volume da unidade no relatório atual
                 volume_unidade = contagem_unidades.get(unidade, 1)
                 
-                # 🎯 CLASSIFICADOR DINÂMICO DE DIAS (A inteligência deduz os gatilhos pelo comportamento da unidade)
-                if volume_unidade >= 50:  # Unidades de Giro Ultra Rápido (Alto Volume de Pedidos Coletados)
+                # CLASSIFICADOR DINÂMICO DE DIAS
+                if volume_unidade >= 50:
                     gatilho_ant, gatilho_med, gatilho_cri = 5, 9, 15
-                elif volume_unidade >= 20:  # Unidades de Giro Quinzenal Rápido
+                elif volume_unidade >= 20:
                     gatilho_ant, gatilho_med, gatilho_cri = 8, 13, 21
-                elif volume_unidade >= 5:   # Unidades de Giro Tradicional
+                elif volume_unidade >= 5:
                     gatilho_ant, gatilho_med, gatilho_cri = 12, 17, 25
-                else:                      # Unidades de Giro Longo / Interiores / Novos fluxos
+                else:
                     gatilho_ant, gatilho_med, gatilho_cri = 18, 25, 35
 
-                # Alocação milimétrica baseada no cálculo dinâmico acima
+                # Alocação milimétrica
                 if dias == gatilho_ant:
                     lote_antecipacao.append(row)
                 elif dias == gatilho_med:
@@ -128,7 +126,8 @@ if uploaded_file is not None:
             def exibir_lote(df_grupo, titulo, nome_arquivo):
                 st.subheader(titulo)
                 if not df_grupo.empty:
-                    st.dataframe(df_grupo, use_container_width=True)
+                    # 🛠️ AJUSTE VISUAL: Substituído 'use_container_width' por 'width="stretch"'
+                    st.dataframe(df_grupo, width="stretch")
                     dados_excel = converter_para_excel(df_grupo)
                     st.download_button(label=f"📥 Baixar {titulo} (.xlsx)", data=dados_excel, file_name=f"{nome_arquivo}_{datetime.now().strftime('%Y-%m-%d')}.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                 else:
@@ -141,7 +140,7 @@ if uploaded_file is not None:
             
             # --- 🚀 BOTÃO ÚNICO DE DISPARO INTELIGENTE NO n8n ---
             st.subheader("🔥 Central de Disparo Automatizado")
-            if st.button("Disparar Mensagens Inteligentes para o n8n", type="primary", use_container_width=True):
+            if st.button("Disparar Mensagens Inteligentes para o n8n", type="primary", width="stretch"):
                 sucesso = True
                 
                 if not df_ant.empty:
