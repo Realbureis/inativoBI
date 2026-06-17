@@ -328,13 +328,15 @@ try:
         if not mapeado:
             unidades_nao_mapeadas.add(unidade)
 
-        # Janela de ±1 dia — não perde clientes em dias sem execução
-        # elif garante que cada cliente entre em no máximo 1 lote
-        if ant - 1 <= dias <= ant + 1:
+        # Cliente entra somente no dia exato do gatilho
+        # Cada cliente participa de no máximo 1 lote
+        if dias == ant:
             lote_antecipacao.append(row)
-        elif med - 1 <= dias <= med + 1:
+
+        elif dias == med:
             lote_mediana.append(row)
-        elif cri - 1 <= dias <= cri + 1:
+
+        elif dias == cri:
             lote_critico.append(row)
 
     # Alertar unidades usando fallback
@@ -368,7 +370,7 @@ try:
     # ─── MÉTRICAS ─────────────────────────────────────────────────────────────
     st.divider()
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("📋 Clientes processados", f"{len(df):,}")
+    c1.metric("📋 Clientes processed", f"{len(df):,}")
     c2.metric("📅 Lote 1 — Antecipação", f"{len(df_ant)}")
     c3.metric("🎯 Lote 2 — Mediana", f"{len(df_med)}")
     c4.metric("🚨 Lote 3 — Crítico", f"{len(df_cri)}")
