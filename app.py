@@ -181,25 +181,18 @@ def converter_para_excel(df: pd.DataFrame) -> bytes:
 
 
 def obter_gatilhos(unidade: str):
-    """
-    Retorna ((ant, med, cri), mapeado).
-    Tenta match exato → substring → fallback (mediana geral 14 dias).
-    """
     if unidade in MAPEAMENTO_UNIDADES:
         return MAPEAMENTO_UNIDADES[unidade], True
 
-    # Match por substring para variações de espaço/acento
     u_lower = unidade.lower()
     for chave, gatilhos in MAPEAMENTO_UNIDADES.items():
         if chave.lower() in u_lower or u_lower in chave.lower():
             return gatilhos, True
 
-    # Fallback: mediana geral da operação = 14 dias → (8, 14, 24)
     return (8, 14, 24), False
 
 
 def enviar_webhook(url: str, dados: list, nome_lote: str):
-    """Envia para webhook com timeout e retorna (sucesso, mensagem)."""
     try:
         res = requests.post(
             url,
@@ -232,8 +225,6 @@ def exibir_lote(df_grupo: pd.DataFrame, titulo: str, nome_arquivo: str):
 
 
 def ler_arquivo(uploaded_file) -> pd.DataFrame | None:
-    """Tenta ler Excel e múltiplos encodings de CSV. Retorna DataFrame ou None."""
-    # Tentativa 1: Excel
     try:
         uploaded_file.seek(0)
         df = pd.read_excel(uploaded_file)
@@ -242,7 +233,6 @@ def ler_arquivo(uploaded_file) -> pd.DataFrame | None:
     except Exception:
         pass
 
-    # Tentativa 2: CSV com variações de separador e encoding
     for sep, enc in [
         (';', 'utf-8-sig'), (';', 'iso-8859-1'),
         (',', 'utf-8'), (';', 'utf-8'), (',', 'iso-8859-1'),
@@ -285,33 +275,32 @@ try:
         st.error("❌ Coluna 'Unidade Prisional' não encontrada. Verifique o arquivo.")
         st.stop()
 
-    # Filtro: apenas pedidos realmente enviados
     col_env = next(
         (c for c in df.columns if c.lower().strip() == 'quant. pedidos enviados'), None
     )
     if col_env:
         df = df[df[col_env] >= 1].copy()
 
-    # Conversão de data (padrão brasileiro dd/mm/aaaa)
     df['Data'] = pd.to_datetime(df['Data'], dayfirst=True).dt.tz_localize(None)
     today = pd.to_datetime(datetime.now().date())
     df['Days_Since'] = (today - df['Data']).dt.days
 
-    # Normalizar unidade e remover espaços extras
     df['Unidade Prisional'] = df['Unidade Prisional'].astype(str).str.strip()
 
-    # Manter apenas o pedido mais recente por cliente único
     df = (
         df.sort_values('Data', ascending=False)
         .drop_duplicates(subset=['Codigo Cliente'], keep='first')
     )
+    
+    # Preenche campos vazios/nulos antes de enviar para evitar erros de parser JSON no n8n (HTTP 422)
+    df = df.fillna("")
 
     # ─── SIDEBAR ──────────────────────────────────────────────────────────────
     todas_unidades = sorted(df['Unidade Prisional'].dropna().unique())
     unidades_nao_mapeadas: set[str] = set()
 
     st.sidebar.metric("🏢 Unidades no relatório", len(todas_unidades))
-    st.sidebar.metric("👥 Clientes únicos", f"{df['Codigo Cliente'].nunique():,}")
+    st.sidebar.metric("👥 Clientes uniques", f"{df['Codigo Cliente'].nunique():,}")
     unidade_selecionada = st.sidebar.selectbox(
         "🔍 Auditar unidade específica:",
         ["Ver Todas"] + todas_unidades,
@@ -321,25 +310,28 @@ try:
     lote_antecipacao, lote_mediana, lote_critico = [], [], []
 
     for _, row in df.iterrows():
-        dias = row['Days_Since']
         unidade = row['Unidade Prisional']
         (ant, med, cri), mapeado = obter_gatilhos(unidade)
 
         if not mapeado:
             unidades_nao_mapeadas.add(unidade)
 
-        # Cliente entra somente no dia exato do gatilho
-        # Cada cliente participa de no máximo 1 lote
-        if dias == ant:
+        # Lógica Segura: Calcula as datas exatas planejadas para cada disparo
+        data_pedido = row['Data']
+        data_antecipacao = data_pedido + pd.Timedelta(days=ant)
+        data_mediana     = data_pedido + pd.Timedelta(days=med)
+        data_critico     = data_pedido + pd.Timedelta(days=cri)
+
+        # Filtra comparando a data teórica com a data de hoje (Evita lacunas caso o script não rode num dia)
+        if today == data_antecipacao:
             lote_antecipacao.append(row)
 
-        elif dias == med:
+        elif today == data_mediana:
             lote_mediana.append(row)
 
-        elif dias == cri:
+        elif today == data_critico:
             lote_critico.append(row)
 
-    # Alertar unidades usando fallback
     if unidades_nao_mapeadas:
         st.sidebar.warning(
             f"⚠️ {len(unidades_nao_mapeadas)} unidade(s) sem mapeamento — "
@@ -358,7 +350,6 @@ try:
     df_med = para_df(lote_mediana)
     df_cri = para_df(lote_critico)
 
-    # Filtro de auditoria por unidade (sidebar)
     if unidade_selecionada != "Ver Todas":
         filtro = lambda d: (
             d[d['Unidade Prisional'] == unidade_selecionada] if not d.empty else d
@@ -370,7 +361,7 @@ try:
     # ─── MÉTRICAS ─────────────────────────────────────────────────────────────
     st.divider()
     c1, c2, c3, c4 = st.columns(4)
-    c1.metric("📋 Clientes processed", f"{len(df):,}")
+    c1.metric("📋 Clientes processados", f"{len(df):,}")
     c2.metric("📅 Lote 1 — Antecipação", f"{len(df_ant)}")
     c3.metric("🎯 Lote 2 — Mediana", f"{len(df_med)}")
     c4.metric("🚨 Lote 3 — Crítico", f"{len(df_cri)}")
