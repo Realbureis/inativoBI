@@ -431,7 +431,7 @@ try:
                     st.error(msg)
                     sucesso_geral = False
 
-            if技术_geral:
+            if sucesso_geral:
                 st.balloons()
                 st.success("🎉 Todos os fluxos enviados com sucesso ao n8n!")
 
