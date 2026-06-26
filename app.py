@@ -18,9 +18,6 @@ WEBHOOK_MEDIANA     = "https://n8n.corcaqui.com.br/webhook/regua_mediana_foco"
 WEBHOOK_CRITICO     = "https://n8n.corcaqui.com.br/webhook/regua_alerta_critico"
 
 # ─── MAPEAMENTO REAL ─────────────────────────────────────────────────────────
-# Fonte: 15.497 pedidos jan–mai 2026 | Fórmula: ant=med×0.6 | cri=min(med×1.7, 45)
-# Unidades com mediana < 7 dias (ruído) e > 45 dias (churn definitivo) são excluídas.
-# Formato: 'Unidade': (antecipação, mediana, crítico)
 MAPEAMENTO_UNIDADES = {
     'CPP Franco da Rocha - Castelinho': (4, 7, 12),
     'Détenus Français - Sant\'Ana': (4, 7, 12),
@@ -220,7 +217,7 @@ def exibir_lote(df_grupo: pd.DataFrame, titulo: str, nome_arquivo: str):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
     else:
-        st.info(f"Nenhum cliente elegível para {titulo} today.")
+        st.info(f"Nenhum cliente elegível para {titulo} hoje.")
     st.divider()
 
 
@@ -275,7 +272,7 @@ try:
         st.error("❌ Coluna 'Unidade Prisional' não encontrada. Verifique o arquivo.")
         st.stop()
 
-    # AJUSTE EXCLUSIVO: Filtra o relatório para conter apenas registros onde o Status seja exatamente igual a 'Enviado'
+    # Filtra o relatório para conter apenas registros onde o Status seja exatamente igual a 'Enviado'
     if 'Status' in df.columns:
         df['Status'] = df['Status'].astype(str).str.strip()
         df = df[df['Status'].str.lower() == 'enviado'].copy()
@@ -312,13 +309,13 @@ try:
     unidades_nao_mapeadas: set[str] = set()
 
     st.sidebar.metric("🏢 Unidades no relatório", len(todas_unidades))
-    st.sidebar.metric("👥 Clientes uniques", f"{df['Codigo Cliente'].nunique():,}")
+    st.sidebar.metric("👥 Clientes únicos", f"{df['Codigo Cliente'].nunique():,}")
     unidade_selecionada = st.sidebar.selectbox(
         "🔍 Auditar unidade específica:",
         ["Ver Todas"] + todas_unidades,
     )
 
-    # ─── MOTOR DE CLASSIFICAÇÃO ───────────────────────────────────────────────
+    # ─── MOTOR DE CLASSIFICAÇÃO (COM AJUSTE DE 2 DIAS ÚTEIS DE LOGÍSTICA) ───────
     lote_antecipacao, lote_mediana, lote_critico = [], [], []
 
     for _, row in df.iterrows():
@@ -328,13 +325,32 @@ try:
         if not mapeado:
             unidades_nao_mapeadas.add(unidade)
 
-        # Lógica Segura: Calcula as datas exatas planejadas para cada disparo
         data_pedido = row['Data']
-        data_antecipacao = data_pedido + pd.Timedelta(days=ant)
-        data_mediana     = data_pedido + pd.Timedelta(days=med)
-        data_critico     = data_pedido + pd.Timedelta(days=cri)
+        
+        # --- CÁLCULO DOS 2 DIAS ÚTEIS DE TRANSPORTE ---
+        # Somamos os 2 dias úteis baseados no dia da semana em que o pedido foi feito
+        dia_semana = data_pedido.dayofweek  # 0=Segunda, 1=Terça, ..., 4=Sexta, 5=Sábado, 6=Domingo
+        
+        if dia_semana == 3:    # Quinta-feira -> Entrega na Segunda (pula 2 dias de fim de semana)
+            dias_logistica = 4
+        elif dia_semana == 4:  # Sexta-feira -> Entrega na Terça (pula 2 dias de fim de semana)
+            dias_logistica = 4
+        elif dia_semana == 5:  # Sábado -> Conta a partir de Segunda + 2 dias = Quarta
+            dias_logistica = 4
+        elif dia_semana == 6:  # Domingo -> Conta a partir de Segunda + 2 dias = Quarta
+            dias_logistica = 3
+        else:                  # Segunda, Terça ou Quarta -> Ciclo limpo de 2 dias na mesma semana
+            dias_logistica = 2
+            
+        data_entrega_real = data_pedido + pd.Timedelta(days=dias_logistica)
+        # ──────────────────────────────────────────────
 
-        # Filtra comparando a data teórica com a data de hoje (Evita lacunas caso o script não rode num dia)
+        # Agora os gatilhos contam a partir de quando o jumbo CHEGOU na unidade
+        data_antecipacao = data_entrega_real + pd.Timedelta(days=ant)
+        data_mediana     = data_entrega_real + pd.Timedelta(days=med)
+        data_critico     = data_entrega_real + pd.Timedelta(days=cri)
+
+        # Filtra comparando a data teórica com a data de hoje
         if today == data_antecipacao:
             lote_antecipacao.append(row)
 
@@ -415,7 +431,7 @@ try:
                     st.error(msg)
                     sucesso_geral = False
 
-            if sucesso_geral:
+            if技术_geral:
                 st.balloons()
                 st.success("🎉 Todos os fluxos enviados com sucesso ao n8n!")
 
