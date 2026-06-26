@@ -13,7 +13,7 @@ st.markdown(
 )
 
 # ─── WEBHOOKS ────────────────────────────────────────────────────────────────
-WEBHOOK_ANTECIPACAO = "https://n8n.corcaqui.com.br/webhook/regua_antecipacao"
+WEBHOOK_ANTECIPACAO = "https://n8n.corcaqui.com.br/webhook-test/regua_antecipacao"
 WEBHOOK_MEDIANA     = "https://n8n.corcaqui.com.br/webhook/regua_mediana_foco"
 WEBHOOK_CRITICO     = "https://n8n.corcaqui.com.br/webhook/regua_alerta_critico"
 
