@@ -18,9 +18,6 @@ WEBHOOK_MEDIANA     = "https://n8n.corcaqui.com.br/webhook/regua_mediana_foco"
 WEBHOOK_CRITICO     = "https://n8n.corcaqui.com.br/webhook/regua_alerta_critico"
 
 # ─── MAPEAMENTO REAL ─────────────────────────────────────────────────────────
-# Fonte: 15.497 pedidos jan–mai 2026 | Fórmula: ant=med×0.6 | cri=min(med×1.7, 45)
-# Unidades com mediana < 7 dias (ruído) e > 45 dias (churn definitivo) são excluídas.
-# Formato: 'Unidade': (antecipação, mediana, crítico)
 MAPEAMENTO_UNIDADES = {
     'CPP Franco da Rocha - Castelinho': (4, 7, 12),
     'Détenus Français - Sant\'Ana': (4, 7, 12),
@@ -275,7 +272,7 @@ try:
         st.error("❌ Coluna 'Unidade Prisional' não encontrada. Verifique o arquivo.")
         st.stop()
 
-    # AJUSTE EXCLUSIVO: Filtra o relatório para conter apenas registros onde o Status seja exatamente igual a 'Enviado'
+    # Filtra o relatório para conter apenas registros onde o Status seja exatamente igual a 'Enviado'
     if 'Status' in df.columns:
         df['Status'] = df['Status'].astype(str).str.strip()
         df = df[df['Status'].str.lower() == 'enviado'].copy()
@@ -434,7 +431,7 @@ try:
                     st.error(msg)
                     sucesso_geral = False
 
-            if sucesso_geral:
+            if技术_geral:
                 st.balloons()
                 st.success("🎉 Todos os fluxos enviados com sucesso ao n8n!")
 
