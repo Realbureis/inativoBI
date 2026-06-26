@@ -220,7 +220,7 @@ def exibir_lote(df_grupo: pd.DataFrame, titulo: str, nome_arquivo: str):
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
     else:
-        st.info(f"Nenhum cliente elegível para {titulo} hoje.")
+        st.info(f"Nenhum cliente elegível para {titulo} today.")
     st.divider()
 
 
@@ -274,6 +274,18 @@ try:
     if 'Unidade Prisional' not in df.columns:
         st.error("❌ Coluna 'Unidade Prisional' não encontrada. Verifique o arquivo.")
         st.stop()
+
+    # AJUSTE EXCLUSIVO: Filtra o relatório para conter apenas registros onde o Status seja exatamente igual a 'Enviado'
+    if 'Status' in df.columns:
+        df['Status'] = df['Status'].astype(str).str.strip()
+        df = df[df['Status'].str.lower() == 'enviado'].copy()
+    else:
+        col_status_alt = next(
+            (c for c in df.columns if 'status' in c.lower() or 'situação' in c.lower()), None
+        )
+        if col_status_alt:
+            df[col_status_alt] = df[col_status_alt].astype(str).str.strip()
+            df = df[df[col_status_alt].str.lower() == 'enviado'].copy()
 
     col_env = next(
         (c for c in df.columns if c.lower().strip() == 'quant. pedidos enviados'), None
