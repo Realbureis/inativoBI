@@ -9,7 +9,7 @@ st.set_page_config(page_title="Retenção Preditiva - Jumbo CDP", page_icon="�
 st.title("🧠 Máquina de Retenção Preditiva — Jumbo CDP")
 st.markdown(
     "Gatilhos calculados a partir da **mediana real de recompra** por unidade prisional — "
-    "5 meses · 15.497 pedidos · **149 unidades mapeadas** · teto de 45 dias no crítico."
+    "5 meses · 15.497 pedidos · **172 unidades mapeadas** · teto de 45 dias no crítico."
 )
 
 # ─── WEBHOOKS ────────────────────────────────────────────────────────────────
@@ -17,156 +17,180 @@ WEBHOOK_ANTECIPACAO = "https://n8n.corcaqui.com.br/webhook-test/regua_antecipaca
 WEBHOOK_MEDIANA     = "https://n8n.corcaqui.com.br/webhook/regua_mediana_foco"
 WEBHOOK_CRITICO     = "https://n8n.corcaqui.com.br/webhook/regua_alerta_critico"
 
-# ─── MAPEAMENTO REAL ─────────────────────────────────────────────────────────
+# ─── MAPEAMENTO NOVO PURIFICADO (APENAS PEDIDOS ENVIADOS / PAGOS) ────────────
 MAPEAMENTO_UNIDADES = {
-    'CPP Franco da Rocha - Castelinho': (4, 7, 12),
-    'Détenus Français - Sant\'Ana': (4, 7, 12),
-    'Penitenciária Itapetininga 1': (4, 7, 12),
-    'Penitenciária São Vicente 1': (4, 7, 12),
-    'Penitenciária Gália 2': (4, 7, 13),
-    'CDP Bauru': (4, 7, 13),
-    'CDP Pinheiros 2': (4, 7, 13),
-    'Penitenciária Guareí 1': (4, 7, 13),
-    'CDP Guarulhos 2': (5, 8, 14),
-    'Penitenciária Adriano Marrey': (5, 8, 14),
-    'CDP Caraguatatuba': (5, 8, 14),
+    'CDP Aguaí': (9, 15, 26),
+    'CDP Americana': (12, 20, 34),
+    'CDP Bauru': (10, 16, 27),
+    'CDP Belém 1': (13, 22, 37),
+    'CDP Belém 2': (14, 23, 39),
+    'CDP Caiuá': (10, 17, 29),
+    'CDP Campinas': (18, 30, 45),
+    'CDP Caraguatatuba': (6, 10, 17),
+    'CDP Diadema': (10, 16, 27),
+    'CDP Franco da Rocha': (7, 12, 20),
     'CDP Guarulhos 1': (5, 8, 14),
-    'CPP Guariba': (5, 8, 14),
-    'CDP Diadema': (5, 8, 14),
-    'Penitenciária Votorantim Feminina': (5, 8, 14),
-    'CDP Sorocaba': (5, 8, 14),
-    'CPP Pacaembu': (5, 8, 14),
-    'Penitenciária Iaras': (5, 8, 14),
-    'Penitenciária Avaré 2': (5, 9, 15),
-    'CDP Praia Grande': (5, 9, 15),
-    'Penitenciária Guareí 2': (5, 9, 15),
-    'Penitenciária Assis': (5, 9, 15),
-    'CPP Hortolândia': (5, 9, 15),
-    'CDP Taubaté': (5, 9, 15),
-    'CDP Mogi das Cruzes': (5, 9, 15),
-    'Penitenciária Lavínia 3': (6, 10, 17),
-    'Penitenciária Dracena': (6, 10, 17),
-    'Penitenciária Guarulhos 2': (6, 10, 17),
-    'Penitenciária Serra Azul 3': (6, 10, 17),
-    'CPP Bauru 3': (6, 10, 17),
-    'CDP Suzano': (6, 10, 17),
-    'CDP Pinheiros 3': (6, 10, 17),
-    'CDP Pacaembu 2': (6, 10, 17),
-    'CDP Jundiaí': (6, 10, 18),
-    'Penitenciária Piracicaba': (6, 10, 18),
-    'Penitenciária Registro': (6, 10, 18),
-    'CR Atibaia': (6, 10, 18),
-    'CDP Pontal': (6, 10, 18),
-    'CDP Osasco 1': (6, 10, 18),
-    'CDP Hortolândia': (7, 11, 19),
-    'Penitenciária Franco da Rocha 3': (7, 11, 19),
-    'CDP Ribeirão Preto': (7, 11, 19),
-    'CDP Icém': (7, 11, 19),
-    'Penitenciária Osvaldo Cruz': (7, 11, 20),
-    'CDP Aguaí': (7, 11, 20),
-    'CPP Mongaguá': (7, 11, 20),
-    'CPP Castelinho': (7, 11, 20),
-    'CDP Caiuá': (7, 11, 20),
-    'CDP Tijuco Preto': (7, 12, 20),
-    'CPP Tremembé': (7, 12, 20),
-    'Détenus Français Penit. Guarulhos II': (7, 12, 20),
-    'Penitenciária Balbinos 1': (7, 12, 20),
-    'CDP São José do Rio Preto': (7, 12, 20),
-    'CDP Itapecerica da Serra': (7, 12, 20),
-    'Penitenciária Sorocaba 2': (7, 12, 20),
-    'Penitenciária Potim 1': (7, 12, 20),
-    'Penitenciária Andradina': (8, 12, 21),
-    'CDP Paulo de Faria': (8, 12, 21),
-    'Penitenciária Florínea': (8, 12, 21),
-    'Penitenciária Hortolândia 4': (8, 13, 22),
-    'Penitenciária Araraquara': (8, 13, 22),
-    'Penitenciária Martinópolis': (8, 13, 22),
-    'Penitenciária Tremembé 2 Feminina': (8, 13, 22),
-    'Penitenciária Casa Branca': (8, 13, 22),
-    'P5 Hortolândia': (8, 13, 22),
-    'Penitenciária Taquarituba': (8, 13, 22),
-    'CDP Santo André': (8, 13, 23),
-    'CDP Piracicaba': (8, 13, 23),
-    'Penitenciária da Capital': (8, 13, 23),
-    'Penitenciária Lavínia 1': (8, 14, 24),
-    'Penitenciária Presidente Bernardes': (8, 14, 24),
-    'Penitenciária Pracinha': (8, 14, 24),
-    'CDP Belém 2': (8, 14, 24),
-    'CDP Franco da Rocha': (8, 14, 24),
-    'CDP Mauá': (8, 14, 24),
-    'Penitenciaria Pontal': (8, 14, 24),
-    'Penitenciária Bernardino de Campos': (8, 14, 24),
-    'Penitenciária Potim 2': (9, 14, 25),
-    'Penitenciária Guarulhos 1': (9, 14, 25),
-    'CDP Pinheiros 4': (9, 14, 25),
-    'Penitenciária Franco da Rocha 1': (9, 15, 26),
-    'CDP Pinheiros 1': (9, 15, 26),
-    'CDP Belém 1': (9, 15, 26),
-    'CPP Jardinópolis': (9, 15, 26),
-    'Penitenciária Hortolândia 2': (9, 15, 26),
-    'Penitenciária Marabá Paulista': (9, 15, 26),
-    'Penitenciária Tremembé 2': (9, 15, 26),
-    'CPP Butantan Feminino': (9, 15, 26),
-    'CR Jaú': (10, 16, 27),
-    'CDP Riolândia': (10, 16, 27),
-    'Penitenciária Cerqueira César 2': (10, 16, 27),
-    'CR Marília': (10, 16, 27),
-    'CPP São Vicente': (10, 16, 28),
-    'CPP Porto Feliz': (10, 16, 28),
-    'CR Itapetininga': (10, 16, 28),
-    'Penitenciária Paraguaçu Paulista': (10, 16, 28),
-    'Penitenciária Pirajuí 2': (10, 17, 29),
-    'Penitenciária José Parada Neto': (10, 17, 29),
-    'Penitenciária Taiúva': (10, 17, 30),
-    'Penitenciária Tremembé 1 Feminina': (10, 17, 30),
-    'Penitenciária Presidente Prudente': (11, 18, 31),
-    'CPP Bauru 1': (11, 18, 31),
-    'Penitenciária Capela do Alto 1': (11, 18, 31),
-    'Détenus Français - Itaí': (11, 18, 31),
-    'Penitenciária Reginópolis 1': (11, 18, 31),
-    'CDP São Bernardo do Campo': (11, 19, 32),
-    'CDP Lavínia': (11, 19, 32),
-    'Penitenciaria Itatinga': (11, 19, 32),
-    'Penitenciária Mogi Guaçu Feminina': (12, 20, 34),
-    'Penitenciária Mairinque': (12, 20, 34),
-    'CDP Osasco 2': (12, 20, 34),
-    'Penitenciária Sant\'Ana Feminina': (12, 20, 34),
-    'Penitenciária Tremembé 1': (12, 20, 34),
-    'Penitenciária Tupi Paulista': (13, 21, 36),
-    'Penitenciária Parelheiros': (13, 21, 37),
-    'Penitenciária Serra Azul 2': (14, 22, 38),
-    'CDP Nova Independência': (14, 23, 39),
-    'Hospital de Custódia Taubaté': (14, 23, 39),
-    'Penitenciária Gália 1': (14, 23, 39),
-    'Penitenciária Itapetininga 2': (14, 23, 39),
+    'CDP Guarulhos 2': (6, 10, 17),
+    'CDP Hortolândia': (8, 14, 24),
+    'CDP Icém': (38, 63, 68),
+    'CDP Itapecerica da Serra': (17, 28, 45),
+    'CDP Jundiaí': (13, 22, 37),
+    'CDP Lavínia': (13, 22, 37),
+    'CDP Mauá': (13, 22, 37),
+    'CDP Mogi das Cruzes': (8, 14, 24),
+    'CDP Nova Independência': (23, 38, 45),
+    'CDP Osasco 1': (22, 36, 45),
+    'CDP Osasco 2': (19, 32, 45),
+    'CDP Pacaembu 1': (28, 47, 52),
+    'CDP Pacaembu 2': (22, 37, 45),
+    'CDP Paulo de Faria': (13, 22, 37),
+    'CDP Pinheiros 1': (11, 19, 32),
+    'CDP Pinheiros 2': (11, 18, 31),
+    'CDP Pinheiros 3': (7, 12, 20),
+    'CDP Pinheiros 4': (11, 18, 31),
+    'CDP Piracicaba': (23, 38, 45),
+    'CDP Pontal': (7, 12, 20),
+    'CDP Praia Grande': (13, 22, 37),
+    'CDP Ribeirão Preto': (10, 16, 27),
+    'CDP Riolândia': (13, 22, 37),
+    'CDP Santo André': (13, 22, 37),
+    'CDP Sorocaba': (17, 29, 45),
+    'CDP Suzano': (17, 28, 45),
+    'CDP São Bernardo do Campo': (13, 21, 36),
+    'CDP São José do Rio Preto': (13, 21, 36),
+    'CDP São José dos Campos': (10, 17, 29),
+    'CDP São Vicente': (8, 14, 24),
+    'CDP Taubaté': (10, 16, 27),
+    'CDP Tijuco Preto ': (13, 22, 37),
+    'CDP Vila Independência': (10, 16, 27),
+    'CPP Bauru 1': (14, 23, 39),
+    'CPP Bauru 2': (13, 22, 37),
+    'CPP Bauru 3': (13, 22, 37),
+    'CPP Butantan Feminino': (19, 32, 45),
+    'CPP Castelinho': (13, 22, 37),
+    'CPP Franco da Rocha - Castelinho': (6, 10, 17),
+    'CPP Guariba': (17, 28, 45),
+    'CPP Hortolândia': (18, 30, 45),
+    'CPP Jardinópolis': (11, 18, 31),
+    'CPP Mongaguá': (12, 20, 34),
+    'CPP Pacaembu': (9, 15, 26),
+    'CPP Porto Feliz': (13, 22, 37),
+    'CPP São Vicente': (19, 31, 45),
+    'CPP Tremembé': (18, 30, 45),
+    'CPP de Campinas -Professor Ataliba Nogueira': (51, 85, 90),
+    'CR Atibaia': (16, 26, 44),
+    'CR Birigui': (13, 21, 36),
+    'CR Bragança Paulista': (28, 47, 52),
+    'CR Itapetininga': (14, 24, 41),
+    'CR Marília': (17, 28, 45),
+    'CR Mococa': (51, 85, 90),
+    'CR Ourinhos': (22, 36, 45),
+    'CR Piracicaba Feminino': (16, 26, 44),
+    'CR São José do Rio Preto Feminino': (19, 32, 45),
+    'CR de Araraquara': (20, 34, 45),
+    'Détenus Français - Itaí': (14, 24, 41),
+    'Détenus Français - Sant\'Ana': (14, 24, 41),
+    'Hospital Franco da Rocha 1': (18, 30, 45),
+    'Hospital Franco da Rocha 2': (33, 55, 60),
+    'Hospital de Custódia Taubaté': (16, 26, 44),
+    'International Prisoners - Sant\'Ana - Women': (19, 32, 45),
+    'José Parada Neto – Semiaberto (RSA)': (20, 33, 45),
+    'P5 Hortolândia ': (19, 32, 45),
+    'Penitenciaria Caiuá': (12, 20, 34),
+    'Penitenciaria Itatinga': (28, 46, 51),
+    'Penitenciaria Pontal': (13, 21, 36),
+    'Penitenciária Adriano Marrey  ': (13, 22, 37),
+    'Penitenciária Andradina': (10, 17, 29),
+    'Penitenciária Araraquara': (8, 14, 24),
+    'Penitenciária Assis': (25, 41, 45),
+    'Penitenciária Avanhandava': (34, 56, 61),
+    'Penitenciária Avaré 2': (24, 40, 45),
+    'Penitenciária Balbinos 1': (12, 20, 34),
+    'Penitenciária Balbinos 2': (25, 42, 45),
+    'Penitenciária Bernardino de Campos': (37, 62, 67),
+    'Penitenciária Capela do Alto 1': (20, 34, 45),
+    'Penitenciária Capela do Alto 2': (22, 36, 45),
+    'Penitenciária Casa Branca': (29, 48, 53),
+    'Penitenciária Cerqueira César 1': (18, 30, 45),
+    'Penitenciária Cerqueira César 2': (18, 30, 45),
+    'Penitenciária Dracena': (22, 37, 45),
+    'Penitenciária Florínea': (20, 33, 45),
+    'Penitenciária Flórida Paulista': (20, 34, 45),
+    'Penitenciária Franca': (19, 31, 45),
+    'Penitenciária Franco da Rocha 1': (13, 21, 36),
+    'Penitenciária Franco da Rocha 2': (23, 38, 45),
+    'Penitenciária Franco da Rocha 3': (8, 13, 22),
+    'Penitenciária Getulina': (58, 97, 102),
+    'Penitenciária Guareí 1': (27, 45, 50),
+    'Penitenciária Guareí 2': (31, 51, 56),
+    'Penitenciária Guarulhos 1': (16, 27, 45),
+    'Penitenciária Guarulhos 2': (8, 13, 22),
+    'Penitenciária Gália 1': (17, 28, 45),
+    'Penitenciária Gália 2': (33, 55, 60),
+    'Penitenciária Hortolândia 1': (17, 29, 45),
+    'Penitenciária Hortolândia 2': (20, 33, 45),
+    'Penitenciária Hortolândia 3': (43, 72, 77),
+    'Penitenciária Hortolândia 4': (22, 36, 45),
+    'Penitenciária Iaras': (17, 28, 45),
+    'Penitenciária Iperó': (19, 31, 45),
+    'Penitenciária Irapuru': (18, 30, 45),
+    'Penitenciária Itapetininga 1': (4, 7, 12),
+    'Penitenciária Itapetininga 2': (25, 42, 45),
+    'Penitenciária Itaí': (16, 27, 45),
     'Penitenciária Itirapina 2': (14, 23, 39),
-    'Penitenciária Hortolândia 1': (14, 23, 40),
-    'Penitenciária Cerqueira César 1': (15, 25, 43),
-    'Penitenciária Irapuru': (16, 26, 44),
-    'Penitenciária Riolândia': (16, 26, 45),
-    'CR Birigui': (16, 27, 45),
-    'Penitenciária Presidente Venceslau 1': (16, 27, 45),
-    'Penitenciária Franca': (17, 28, 45),
-    'Penitenciária Iperó': (17, 28, 45),
-    'Penitenciária Pirajuí 1': (17, 28, 45),
-    'Penitenciária São Vicente 2': (17, 29, 45),
-    'CDP Campinas': (17, 29, 45),
-    'Penitenciária Flórida Paulista': (17, 29, 45),
-    'Penitenciária Lucélia': (18, 30, 45),
-    'Penitenciária de Itirapina 1': (18, 30, 45),
-    'Penitenciária Pirajuí Feminina': (18, 30, 45),
-    'Penitenciária Itaí': (19, 31, 45),
-    'CR Bragança Paulista': (19, 32, 45),
-    'Penitenciária Avanhandava': (19, 32, 45),
-    'Penitenciária Lavínia 2': (19, 32, 45),
+    'Penitenciária José Parada Neto ': (17, 29, 45),
+    'Penitenciária Junqueirópolis': (13, 21, 36),
+    'Penitenciária Lavínia 1': (34, 56, 61),
+    'Penitenciária Lavínia 2': (20, 33, 45),
+    'Penitenciária Lavínia 3': (29, 49, 54),
+    'Penitenciária Limeira': (14, 24, 41),
+    'Penitenciária Lucélia': (22, 36, 45),
+    'Penitenciária Mairinque': (17, 29, 45),
+    'Penitenciária Marabá Paulista': (29, 49, 54),
+    'Penitenciária Martinópolis': (65, 109, 114),
+    'Penitenciária Marília': (21, 35, 45),
+    'Penitenciária Mirandópolis 1': (25, 42, 45),
+    'Penitenciária Mogi Guaçu Feminina': (17, 29, 45),
+    'Penitenciária Pacaembu': (30, 50, 55),
+    'Penitenciária Paraguaçu Paulista': (18, 30, 45),
+    'Penitenciária Parelheiros': (18, 30, 45),
+    'Penitenciária Piracicaba': (28, 46, 51),
+    'Penitenciária Pirajuí 1': (25, 42, 45),
+    'Penitenciária Pirajuí 2': (46, 77, 82),
+    'Penitenciária Pirajuí Feminina': (19, 32, 45),
+    'Penitenciária Potim 1': (16, 27, 45),
+    'Penitenciária Potim 2': (16, 26, 44),
+    'Penitenciária Pracinha': (17, 29, 45),
+    'Penitenciária Presidente Bernardes': (10, 16, 27),
+    'Penitenciária Presidente Prudente': (11, 18, 31),
+    'Penitenciária Presidente Venceslau 1': (28, 47, 52),
+    'Penitenciária Presidente Venceslau 2': (30, 50, 55),
+    'Penitenciária Reginópolis 1': (22, 36, 45),
+    'Penitenciária Reginópolis 2': (34, 57, 62),
+    'Penitenciária Registro': (23, 39, 45),
+    'Penitenciária Ribeirão Preto': (49, 82, 87),
+    'Penitenciária Riolândia': (20, 33, 45),
+    'Penitenciária Sant\'Ana Feminina': (21, 35, 45),
+    'Penitenciária Serra Azul 1': (28, 47, 52),
+    'Penitenciária Serra Azul 2': (23, 38, 45),
+    'Penitenciária Serra Azul 3': (19, 32, 45),
     'Penitenciária Sorocaba 1': (19, 32, 45),
-    'Penitenciária Álvaro de Carvalho 2': (20, 32, 45),
-    'Penitenciaria Caiuá': (20, 32, 45),
-    'CR de Araraquara': (20, 33, 45),
-    'Penitenciária Marília': (20, 34, 45),
-    'José Parada Neto – Semiaberto (RSA)': (20, 34, 45),
-    'Penitenciária Hortolândia 3': (22, 36, 45),
-    'CPP Bauru 2': (23, 38, 45),
+    'Penitenciária Sorocaba 2': (14, 24, 41),
+    'Penitenciária São Vicente 1': (31, 51, 56),
+    'Penitenciária São Vicente 2': (22, 36, 45),
+    'Penitenciária Taiúva': (22, 36, 45),
+    'Penitenciária Taquarituba': (16, 27, 45),
+    'Penitenciária Tremembé 1': (13, 22, 37),
+    'Penitenciária Tremembé 1 Feminina': (14, 24, 41),
+    'Penitenciária Tremembé 2': (11, 18, 31),
+    'Penitenciária Tremembé 2 Feminina': (9, 15, 26),
+    'Penitenciária Tupi Paulista': (58, 96, 101),
+    'Penitenciária Valparaíso': (13, 22, 37),
+    'Penitenciária Votorantim Feminina': (12, 20, 34),
+    'Penitenciária da Capital ': (10, 16, 27),
+    'Penitenciária de Itirapina 1': (18, 30, 45),
+    'Penitenciária Álvaro de Carvalho': (55, 91, 96),
+    'Penitenciária Álvaro de Carvalho 2': (53, 88, 93),
 }
 
 # ─── FUNÇÕES AUXILIARES ───────────────────────────────────────────────────────
@@ -186,7 +210,7 @@ def obter_gatilhos(unidade: str):
         if chave.lower() in u_lower or u_lower in chave.lower():
             return gatilhos, True
 
-    return (8, 14, 24), False
+    return (8, 23, 39), False  # Fallback baseado na nova mediana global de 23 dias
 
 
 def enviar_webhook(url: str, dados: list, nome_lote: str):
@@ -272,17 +296,17 @@ try:
         st.error("❌ Coluna 'Unidade Prisional' não encontrada. Verifique o arquivo.")
         st.stop()
 
-    # Filtra o relatório para conter apenas registros onde o Status seja exatamente igual a 'Enviado'
+    # Filtra o relatório para conter apenas registros com status de faturamento real
     if 'Status' in df.columns:
         df['Status'] = df['Status'].astype(str).str.strip()
-        df = df[df['Status'].str.lower() == 'enviado'].copy()
+        df = df[df['Status'].str.lower().isin(['enviado', 'pagamento efetuado'])].copy()
     else:
         col_status_alt = next(
             (c for c in df.columns if 'status' in c.lower() or 'situação' in c.lower()), None
         )
         if col_status_alt:
             df[col_status_alt] = df[col_status_alt].astype(str).str.strip()
-            df = df[df[col_status_alt].str.lower() == 'enviado'].copy()
+            df = df[df[col_status_alt].str.lower().isin(['enviado', 'pagamento efetuado'])].copy()
 
     col_env = next(
         (c for c in df.columns if c.lower().strip() == 'quant. pedidos enviados'), None
@@ -290,8 +314,9 @@ try:
     if col_env:
         df = df[df[col_env] >= 1].copy()
 
-    df['Data'] = pd.to_datetime(df['Data'], dayfirst=True).dt.tz_localize(None)
-    today = pd.to_datetime(datetime.now().date())
+    # Normalização segura das datas
+    df['Data'] = pd.to_datetime(df['Data'], dayfirst=True).dt.tz_localize(None).dt.normalize()
+    today = pd.to_datetime(datetime.now().date()).normalize()
     df['Days_Since'] = (today - df['Data']).dt.days
 
     df['Unidade Prisional'] = df['Unidade Prisional'].astype(str).str.strip()
@@ -315,7 +340,7 @@ try:
         ["Ver Todas"] + todas_unidades,
     )
 
-    # ─── MOTOR DE CLASSIFICAÇÃO (COM AJUSTE DE 2 DIAS ÚTEIS DE LOGÍSTICA) ───────
+    # ─── MOTOR DE CLASSIFICAÇÃO (DIA EXATO COM LOGÍSTICA DE 3 DIAS ÚTEIS DE ENTREGA) ───
     lote_antecipacao, lote_mediana, lote_critico = [], [], []
 
     for _, row in df.iterrows():
@@ -326,31 +351,29 @@ try:
             unidades_nao_mapeadas.add(unidade)
 
         data_pedido = row['Data']
+        dia_semana = data_pedido.dayofweek  # 0=Seg, 1=Ter, 2=Qua, 3=Qui, 4=Sex, 5=Sáb, 6=Dom
         
-        # --- CÁLCULO DOS 2 DIAS ÚTEIS DE TRANSPORTE ---
-        # Somamos os 2 dias úteis baseados no dia da semana em que o pedido foi feito
-        dia_semana = data_pedido.dayofweek  # 0=Segunda, 1=Terça, ..., 4=Sexta, 5=Sábado, 6=Domingo
-        
-        if dia_semana == 3:    # Quinta-feira -> Entrega na Segunda (pula 2 dias de fim de semana)
+        # --- NOVO MOTOR LOGÍSTICO (3 DIAS ÚTEIS COM REAPROVEITAMENTO DE FINAL DE SEMANA) ---
+        if dia_semana in [0, 1, 2]:  # Segunda, Terça ou Quarta -> Despacha no dia seguinte + 3 dias úteis
+            dias_logistica = 4       # Ex: Compra na Seg (0) -> Sai na Ter -> Entrega na Sex (4 dias depois)
+        elif dia_semana == 3:        # Quinta-feira -> Despacha na Sexta -> Entrega na Quarta da outra semana
+            dias_logistica = 6
+        elif dia_semana == 4:        # Sexta-feira -> Despacha na Segunda -> Entrega na Quinta da outra semana
+            dias_logistica = 6
+        elif dia_semana == 5:        # Sábado -> Despacha na Segunda -> Entrega na Quinta da outra semana
+            dias_logistica = 5
+        elif dia_semana == 6:        # Domingo -> Despacha na Segunda -> Entrega na Quinta da outra semana
             dias_logistica = 4
-        elif dia_semana == 4:  # Sexta-feira -> Entrega na Terça (pula 2 dias de fim de semana)
-            dias_logistica = 4
-        elif dia_semana == 5:  # Sábado -> Conta a partir de Segunda + 2 dias = Quarta
-            dias_logistica = 4
-        elif dia_semana == 6:  # Domingo -> Conta a partir de Segunda + 2 dias = Quarta
-            dias_logistica = 3
-        else:                  # Segunda, Terça ou Quarta -> Ciclo limpo de 2 dias na mesma semana
-            dias_logistica = 2
             
         data_entrega_real = data_pedido + pd.Timedelta(days=dias_logistica)
-        # ──────────────────────────────────────────────
+        # ───────────────────────────────────────────────────────────────────────────────────
 
-        # Agora os gatilhos contam a partir de quando o jumbo CHEGOU na unidade
-        data_antecipacao = data_entrega_real + pd.Timedelta(days=ant)
-        data_mediana     = data_entrega_real + pd.Timedelta(days=med)
-        data_critico     = data_entrega_real + pd.Timedelta(days=cri)
+        # Datas exatas calculadas de disparo
+        data_antecipacao = (data_entrega_real + pd.Timedelta(days=ant)).normalize()
+        data_mediana     = (data_entrega_real + pd.Timedelta(days=med)).normalize()
+        data_critico     = (data_entrega_real + pd.Timedelta(days=cri)).normalize()
 
-        # Filtra comparando a data teórica com a data de hoje
+        # COMPARAÇÃO DIA EXATO
         if today == data_antecipacao:
             lote_antecipacao.append(row)
 
@@ -363,7 +386,7 @@ try:
     if unidades_nao_mapeadas:
         st.sidebar.warning(
             f"⚠️ {len(unidades_nao_mapeadas)} unidade(s) sem mapeamento — "
-            f"usando fallback (14 dias):\n\n" +
+            f"usando fallback (23 dias):\n\n" +
             "\n".join(f"• {u}" for u in sorted(unidades_nao_mapeadas))
         )
 
